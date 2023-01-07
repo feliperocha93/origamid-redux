@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <h1 id="student"></h1>
+  <h1 id="email"></h1>
+  <h1 id="days-left"></h1>
+  <ul id="classes"></ul>
+  <script type="module" src="./redux.min.js"></script>
+  <script type="module" src="./toolkit.min.js"></script>
+  <script type="module">
+    // aluno/INCREMENTAR_TEMPO, adiciona 1 dia de acesso
+    // aluno/REDUZIR_TEMPO, reduz 1 dia de acesso
+    // aluno/MODIFICAR_EMAIL(email), modifica o email do usuário
+    // aulas/COMPLETAR_AULA(id), completa a aula com base no ID passado
+    // aulas/COMPLETAR_CURSO, completa todas as aulas
+    // aulas/RESETAR_CURSO, reseta todas as aulas completas
+    // Crie constantes e action creators para as ações.
+    // Crie um reducer para aluno e um para aulas.
+    // Renderize na tela o nome, email, tempo restante e o total de aulas completas
+    // Configure a DevTools
+
+    // Constants
+    const INCREMENTAR_TEMPO = 'aluno/INCREMENTAR_TEMPO';
+    const REDUZIR_TEMPO = 'aluno/REDUZIR_TEMPO';
+    const MODIFICAR_EMAIL = 'aluno/MODIFICAR_EMAIL';
+    const COMPLETAR_AULA = 'aulas/COMPLETAR_AULA';
+    const COMPLETAR_CURSO = 'aulas/COMPLETAR_CURSO';
+    const RESETAR_CURSO = 'aulas/RESETAR_CURSO';
+
+    // Action Creator
+    export const incrementarTempo = { type: INCREMENTAR_TEMPO };
+    export const reduzirTempo = { type: REDUZIR_TEMPO };
+    export const modificarEmail = (payload) => (
+      { type: MODIFICAR_EMAIL, payload }
+    );
+    export const completarAula = (payload) => (
+      { type: COMPLETAR_AULA, payload }
+    );
+    export const completarCurso = { type: COMPLETAR_CURSO };
+    export const resetarCursp = { type: RESETAR_CURSO };
+
+    //Initial State
+    const initialStudent = {
+      nome: 'André Rafael',
+      email: 'andre@origamid.com',
+      diasRestantes: 120,
+    };
+
+    const initialClasses = [
+      {
+        id: 1,
+        nome: 'Design',
+        completa: true,
+      },
+      {
+        id: 2,
+        nome: 'HTML',
+        completa: false,
+      },
+      {
+        id: 3,
+        nome: 'CSS',
+        completa: false,
+      },
+      {
+        id: 4,
+        nome: 'JavaScript',
+        completa: false,
+      },
+    ];
+
+    //Reducer
+    const students = immer.produce((state , action) => {
+      switch (action.type) {
+        case INCREMENTAR_TEMPO:
+          state.diasRestantes++;
+          break;
+        case REDUZIR_TEMPO:
+          state.diasRestantes--;
+          break;
+        case MODIFICAR_EMAIL:
+          state.email = action.payload;
+          break;
+      }
+    }, initialStudent);
+
+    const classes = immer.produce((state, action) => {
+      switch (action.type) {
+        case COMPLETAR_AULA:
+          const index = state.findIndex((x) => x.id === action.payload);
+          state[index].completa = true;
+          break;
+        case COMPLETAR_CURSO:
+          state.forEach((aula) => aula.completa = true);
+          break;
+        case RESETAR_CURSO:
+          state.forEach((aula) => aula.completa = false);
+          break;
+      }
+    }, initialClasses);
+
+    const reducer = Redux.combineReducers({ students, classes })
+    const store = Redux.createStore(reducer, window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__(),);
+
+    function renderStudent() {
+      const student = document.getElementById('student');
+      const email = document.getElementById('email');
+      const daysLeft = document.getElementById('days-left');
+
+      student.innerText = `Aluno: ${store.getState().students.nome}`;
+      email.innerText = `Email: ${store.getState().students.email}`;
+      daysLeft.innerText = `Dias Restantes: ${store.getState().students.diasRestantes}`;
+    }
+
+    function renderClasses() {
+      const list = document.getElementById('classes');
+      list.innerHTML = "";
+      const classes = store.getState().classes;
+
+      classes.forEach(({ id, nome, completa }) => {
+        const li = document.createElement('li');
+        li.innerText = `${id}) ${nome} - ${completa ? 'DONE' : 'TODO'}`
+        list.appendChild(li);
+      });
+    }
+
+    store.subscribe(renderStudent);
+    store.subscribe(renderClasses);
+    store.dispatch(incrementarTempo);
+    store.dispatch(modificarEmail('fee.rocha@hotmail.com'));
+    store.dispatch(completarAula(3));
+  </script>
+</body>
+</html>
